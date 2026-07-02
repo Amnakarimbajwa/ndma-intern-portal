@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>NDMA Internship Portal — Set Up Login</title>
+  <style>
+    body { font-family: system-ui, sans-serif; background:#0f2540; display:flex; align-items:center; justify-content:center; height:100vh; margin:0; }
+    .card { background:#fff; padding:36px; border-radius:10px; width:340px; box-shadow:0 10px 30px rgba(0,0,0,.2); }
+    h1 { font-size:20px; margin:0 0 4px; color:#0f2540; }
+    p.sub { color:#666; font-size:13px; margin:0 0 20px; }
+    label { display:block; font-size:12px; font-weight:600; color:#444; margin-bottom:4px; }
+    input { width:100%; padding:10px; margin-bottom:14px; border:1px solid #ccc; border-radius:6px; box-sizing:border-box; }
+    button { width:100%; padding:10px; background:#0f2540; color:#fff; border:none; border-radius:6px; font-weight:600; cursor:pointer; }
+    .error { color:#c0392b; font-size:13px; margin-bottom:12px; }
+    .verified { background:#e6f4ea; color:#1e7e34; padding:8px 10px; border-radius:6px; font-size:13px; margin-bottom:16px; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h1>Almost done, <%= name %></h1>
+    <p class="sub">Identity verified. Choose a username and password.</p>
+    <% if (error) { %><div class="error"><%= error %></div><% } %>
+    <form method="POST" action="/signup/complete">
+      <label>Username</label>
+      <input type="text" name="username" value="<%= suggested %>" required>
+
+      <label>Password (min 6 characters)</label>
+      <input type="password" name="password" required>
+
+      <label>Confirm password</label>
+      <input type="password" name="confirmPassword" required>
+
+      <button type="submit">Create Account</button>
+    </form>
+  </div>
+</body>
+</html>
