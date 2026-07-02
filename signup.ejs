@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>NDMA Internship Portal — Sign Up</title>
+  <style>
+    body { font-family: system-ui, sans-serif; background:#0f2540; display:flex; align-items:center; justify-content:center; height:100vh; margin:0; }
+    .card { background:#fff; padding:36px; border-radius:10px; width:340px; box-shadow:0 10px 30px rgba(0,0,0,.2); }
+    h1 { font-size:20px; margin:0 0 4px; color:#0f2540; }
+    p.sub { color:#666; font-size:13px; margin:0 0 20px; }
+    input { width:100%; padding:10px; margin-bottom:12px; border:1px solid #ccc; border-radius:6px; box-sizing:border-box; }
+    button { width:100%; padding:10px; background:#0f2540; color:#fff; border:none; border-radius:6px; font-weight:600; cursor:pointer; }
+    .error { color:#c0392b; font-size:13px; margin-bottom:12px; }
+    a { color:#0f2540; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h1>Create Your Account</h1>
+    <p class="sub">Enter your details exactly as recorded with NDMA to verify you're on the intern list.</p>
+    <% if (error) { %><div class="error"><%= error %></div><% } %>
+    <form method="POST" action="/signup/verify">
+      <input type="text" name="fullName" placeholder="Full Name (as on your CNIC)" required autofocus>
+      <input type="text" name="cnic" placeholder="CNIC (e.g. 12345-1234567-1)" required>
+      <button type="submit">Verify & Continue</button>
+    </form>
+    <p style="text-align:center; font-size:13px; margin-top:14px;">
+      Already have an account? <a href="/login">Log In</a>
+    </p>
+  </div>
+</body>
+</html>
