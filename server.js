@@ -2,11 +2,9 @@ require('dotenv').config();
 const express = require('express');
 const session = require('express-session');
 const bcrypt = require('bcryptjs');
-const multer = require('multer');
 const path = require('path');
 const { Pool } = require('pg');
 const ExcelJS = require('exceljs');
-const cloudinary = require('cloudinary').v2;
 
 const app = express();
 const PORT = process.env.PORT || 4000;
@@ -44,57 +42,6 @@ app.use(session({
   }
 }));
 
-// ── File uploads (Cloudinary) ────────────────────────────────
-// Files are uploaded straight to Cloudinary instead of local disk.
-// This matters because on free hosts like Render, local disk storage is
-// wiped every time the app restarts or redeploys — Cloudinary keeps
-// files safe across restarts, and works the same whether you're running
-// locally or deployed.
-cloudinary.config({
-  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
-  api_key: process.env.CLOUDINARY_API_KEY,
-  api_secret: process.env.CLOUDINARY_API_SECRET,
-});
-
-// A minimal custom multer storage engine that streams uploads straight to
-// Cloudinary. We write this ourselves instead of using the
-// multer-storage-cloudinary package because that package is still pinned to
-// Cloudinary SDK v1 as a peer dependency and conflicts with the v2 SDK used
-// here — this avoids that conflict entirely.
-class CloudinaryStorageEngine {
-  _handleFile(req, file, cb) {
-    const publicId = `${Date.now()}-${file.originalname.replace(/[^a-zA-Z0-9.\-_]/g, '_')}`;
-    const uploadStream = cloudinary.uploader.upload_stream(
-      {
-        folder: 'ndma-intern-portal/weekly-progress',
-        resource_type: 'auto', // handles images, PDFs, docx, xlsx, zip, etc.
-        public_id: publicId,
-      },
-      (error, result) => {
-        if (error) return cb(error);
-        // `path` mirrors what multer-storage-cloudinary exposed, so the rest
-        // of the app (req.files.map(f => f.path)) works unchanged.
-        cb(null, { path: result.secure_url, filename: result.public_id, size: result.bytes });
-      }
-    );
-    file.stream.pipe(uploadStream);
-  }
-  _removeFile(req, file, cb) {
-    cloudinary.uploader.destroy(file.filename, { resource_type: 'auto' }, cb);
-  }
-}
-
-const storage = new CloudinaryStorageEngine();
-
-const upload = multer({
-  storage,
-  limits: { fileSize: 10 * 1024 * 1024 }, // 10MB per file
-  fileFilter: (req, file, cb) => {
-    const allowed = /\.(pdf|doc|docx|ppt|pptx|xls|xlsx|jpg|jpeg|png|zip)$/i;
-    cb(null, allowed.test(file.originalname));
-  }
-});
-
 // ── Auth middleware ──────────────────────────────────────────
 function requireIntern(req, res, next) {
   if (!req.session.intern) return res.redirect('/login');
@@ -105,7 +52,13 @@ function requireAdmin(req, res, next) {
   next();
 }
 
-const TOTAL_WEEKS = 16; // adjust to your internship duration
+const TOTAL_WEEKS = 8; // adjust to your internship duration
+const DAYS = [
+  { key: 'monday', col: 'monday_text', label: 'Monday' },
+  { key: 'tuesday', col: 'tuesday_text', label: 'Tuesday' },
+  { key: 'wednesday', col: 'wednesday_text', label: 'Wednesday' },
+  { key: 'thursday', col: 'thursday_text', label: 'Thursday' },
+];
 
 function normalizeCnic(s) { return (s || '').replace(/[^0-9]/g, ''); }
 function normalizeName(s) { return (s || '').toLowerCase().replace(/^(ms\.?|mr\.?|dr\.?)\s*/i, '').replace(/\s+/g, ' ').trim(); }
@@ -244,37 +197,45 @@ app.get('/submit/:week', requireIntern, async (req, res) => {
   res.render('submit', { intern: req.session.intern, week, existing: rows[0] || null, error: null });
 });
 
-// NOTE: attachments are now stored as full Cloudinary URLs (comma-separated),
-// not local filenames. Any view that renders attachment links (dashboard.ejs,
-// submit.ejs, admin_dashboard.ejs) should link directly to the stored value,
-// e.g. `<a href="<%= url %>">` instead of `<a href="/uploads/<%= filename %>">`.
-app.post('/submit/:week', requireIntern, upload.array('attachments', 5), async (req, res) => {
+app.post('/submit/:week', requireIntern, async (req, res) => {
   const week = parseInt(req.params.week);
-  const { taskText, weekStartDate } = req.body;
-  if (!taskText || !taskText.trim()) {
-    return res.render('submit', { intern: req.session.intern, week, existing: null, error: 'Task description is required' });
+  const { monday, tuesday, wednesday, thursday, weekStartDate } = req.body;
+  const dayValues = { monday, tuesday, wednesday, thursday };
+
+  const hasAnyText = DAYS.some(d => (dayValues[d.key] || '').trim());
+  if (!hasAnyText) {
+    return res.render('submit', { intern: req.session.intern, week, existing: null, error: 'Please fill in at least one day before submitting' });
   }
-  // multer-storage-cloudinary sets file.path to the uploaded file's Cloudinary URL
-  const newFiles = req.files ? req.files.map(f => f.path) : [];
+
+  // Combined summary kept in sync so the admin table/export (which read
+  // task_text) keep working without changes.
+  const taskText = DAYS
+    .map(d => `${d.label}: ${(dayValues[d.key] || '').trim() || '—'}`)
+    .join('\n');
 
   const { rows } = await pool.query(
-    'SELECT * FROM weekly_progress WHERE intern_id=$1 AND week_number=$2',
+    'SELECT id FROM weekly_progress WHERE intern_id=$1 AND week_number=$2',
     [req.session.intern.id, week]
   );
 
   if (rows.length) {
-    let attachments = rows[0].attachments ? rows[0].attachments.split(',') : [];
-    attachments = attachments.concat(newFiles);
     await pool.query(
-      `UPDATE weekly_progress SET task_text=$1, week_start_date=$2, attachments=$3, updated_at=NOW()
-       WHERE intern_id=$4 AND week_number=$5`,
-      [taskText.trim(), weekStartDate || null, attachments.join(','), req.session.intern.id, week]
+      `UPDATE weekly_progress
+       SET task_text=$1, week_start_date=$2,
+           monday_text=$3, tuesday_text=$4, wednesday_text=$5, thursday_text=$6,
+           updated_at=NOW()
+       WHERE intern_id=$7 AND week_number=$8`,
+      [taskText, weekStartDate || null,
+       (monday || '').trim(), (tuesday || '').trim(), (wednesday || '').trim(), (thursday || '').trim(),
+       req.session.intern.id, week]
     );
   } else {
     await pool.query(
-      `INSERT INTO weekly_progress (intern_id, week_number, week_start_date, task_text, attachments)
-       VALUES ($1,$2,$3,$4,$5)`,
-      [req.session.intern.id, week, weekStartDate || null, taskText.trim(), newFiles.join(',')]
+      `INSERT INTO weekly_progress
+        (intern_id, week_number, week_start_date, task_text, monday_text, tuesday_text, wednesday_text, thursday_text)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8)`,
+      [req.session.intern.id, week, weekStartDate || null, taskText,
+       (monday || '').trim(), (tuesday || '').trim(), (wednesday || '').trim(), (thursday || '').trim()]
     );
   }
   res.redirect('/dashboard');
@@ -324,7 +285,7 @@ app.get('/admin', requireAdmin, async (req, res) => {
 app.get('/admin/export', requireAdmin, async (req, res) => {
   const { week, intern } = req.query;
   let query = `
-    SELECT wp.week_number, i.full_name, i.university, i.department, wp.task_text, wp.attachments, wp.submitted_at, wp.updated_at
+    SELECT wp.week_number, i.full_name, i.university, i.department, wp.monday_text, wp.tuesday_text, wp.wednesday_text, wp.thursday_text, wp.submitted_at, wp.updated_at
     FROM weekly_progress wp JOIN interns i ON i.id = wp.intern_id WHERE 1=1`;
   const params = [];
   if (week) { params.push(week); query += ` AND wp.week_number = $${params.length}`; }
@@ -339,8 +300,10 @@ app.get('/admin/export', requireAdmin, async (req, res) => {
     { header: 'Intern', key: 'full_name', width: 30 },
     { header: 'University', key: 'university', width: 30 },
     { header: 'Department', key: 'department', width: 20 },
-    { header: 'Task', key: 'task_text', width: 60 },
-    { header: 'Attachments', key: 'attachments', width: 50 },
+    { header: 'Monday', key: 'monday_text', width: 30 },
+    { header: 'Tuesday', key: 'tuesday_text', width: 30 },
+    { header: 'Wednesday', key: 'wednesday_text', width: 30 },
+    { header: 'Thursday', key: 'thursday_text', width: 30 },
     { header: 'Submitted At', key: 'submitted_at', width: 20 },
   ];
   rows.forEach(r => ws.addRow(r));
