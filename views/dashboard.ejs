@@ -1,56 +1,304 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>My Weekly Progress</title>
-  <style>
-    body { font-family: system-ui, sans-serif; background:#f4f6f9; margin:0; color:#222; }
-    header { background:#0f2540; color:#fff; padding:16px 24px; display:flex; justify-content:space-between; align-items:center; }
-    header a { color:#fff; text-decoration:none; font-size:13px; opacity:.85; }
-    .wrap { max-width:900px; margin:24px auto; padding:0 16px; }
-    h2 { font-size:16px; color:#0f2540; margin:24px 0 12px; }
-    .grid { display:grid; grid-template-columns:repeat(auto-fill, minmax(140px,1fr)); gap:10px; }
-    .week-btn { display:block; text-align:center; padding:14px 8px; border-radius:8px; text-decoration:none; font-weight:600; font-size:14px; }
-    .done { background:#e6f4ea; color:#1e7e34; border:1px solid #b7e0c2; }
-    .pending { background:#fff; color:#0f2540; border:1px solid #d7dce3; }
-    table { width:100%; border-collapse:collapse; background:#fff; border-radius:8px; overflow:hidden; }
-    th, td { text-align:left; padding:10px 12px; border-bottom:1px solid #eee; font-size:14px; }
-    th { background:#eef1f6; color:#333; }
-    .empty { color:#888; font-size:14px; padding:16px; text-align:center; }
-  </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>My Weekly Progress — NDMA Internship</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper:#f4f1e9;
+    --navy2:#16273f;
+    --ink:#1c2430;
+    --muted:#707a87;
+    --amber:#b9812f;
+    --amber-soft:#f4e6cd;
+    --green:#2f6f52;
+    --line:#e1dbcb;
+    --card:#ffffff;
+    --radius:10px;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    background:var(--paper);
+    color:var(--ink);
+    font-family:'IBM Plex Sans', system-ui, sans-serif;
+    -webkit-font-smoothing:antialiased;
+  }
+
+  /* Header */
+  header{
+    background:var(--navy2);
+    color:#fff;
+    padding:22px 32px;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    border-bottom:3px solid var(--amber);
+  }
+  .brand{ display:flex; flex-direction:column; gap:2px; }
+  .brand .eyebrow{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:11px;
+    letter-spacing:.14em;
+    text-transform:uppercase;
+    color:#e7c98a;
+  }
+  .brand .name{
+    font-family:'Space Grotesk', sans-serif;
+    font-weight:600;
+    font-size:19px;
+  }
+  header a.logout{
+    color:#fff;
+    text-decoration:none;
+    font-size:13px;
+    opacity:.8;
+    border:1px solid rgba(255,255,255,.3);
+    padding:7px 14px;
+    border-radius:20px;
+    transition:opacity .15s, border-color .15s;
+  }
+  header a.logout:hover{ opacity:1; border-color:rgba(255,255,255,.6); }
+
+  .wrap{ max-width:920px; margin:0 auto; padding:32px 20px 64px; }
+
+  .section-head{
+    display:flex;
+    align-items:baseline;
+    justify-content:space-between;
+    margin:36px 0 14px;
+  }
+  .section-head h2{
+    font-family:'Space Grotesk', sans-serif;
+    font-size:17px;
+    font-weight:600;
+    color:var(--navy2);
+    margin:0;
+  }
+  .section-head .hint{ font-size:12.5px; color:var(--muted); }
+
+  /* Progress strip */
+  .progress-card{
+    background:var(--card);
+    border:1px solid var(--line);
+    border-radius:var(--radius);
+    padding:18px 22px;
+    display:flex;
+    align-items:center;
+    gap:18px;
+  }
+  .progress-count{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:22px;
+    font-weight:600;
+    color:var(--navy2);
+    white-space:nowrap;
+  }
+  .progress-count span{ color:var(--muted); font-size:14px; font-weight:400; }
+  .progress-track{
+    flex:1;
+    height:8px;
+    background:var(--paper);
+    border-radius:4px;
+    overflow:hidden;
+    border:1px solid var(--line);
+  }
+  .progress-fill{
+    height:100%;
+    background:linear-gradient(90deg, var(--green), #4a9270);
+    border-radius:4px;
+  }
+
+  /* Week tiles */
+  .grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fill, minmax(130px,1fr));
+    gap:12px;
+  }
+  .week-btn{
+    position:relative;
+    display:flex;
+    flex-direction:column;
+    gap:8px;
+    background:var(--card);
+    border:1px solid var(--line);
+    border-radius:var(--radius);
+    padding:16px 14px;
+    text-decoration:none;
+    color:var(--ink);
+    transition:transform .12s ease, box-shadow .12s ease, border-color .12s ease;
+  }
+  .week-btn:hover{
+    transform:translateY(-2px);
+    box-shadow:0 6px 16px rgba(16,27,43,.1);
+    border-color:#c9c1ac;
+  }
+  .week-btn .wk{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:20px;
+    font-weight:600;
+    color:var(--navy2);
+  }
+  .week-btn .status{
+    display:inline-flex;
+    align-items:center;
+    gap:6px;
+    font-size:11.5px;
+    font-weight:600;
+    letter-spacing:.02em;
+  }
+  .status::before{
+    content:'';
+    width:7px; height:7px;
+    border-radius:50%;
+    display:inline-block;
+  }
+  .week-btn.done .status{ color:var(--green); }
+  .week-btn.done .status::before{ background:var(--green); }
+  .week-btn.done{ border-top:3px solid var(--green); }
+  .week-btn.pending .status{ color:var(--amber); }
+  .week-btn.pending .status::before{ background:var(--amber); }
+  .week-btn.pending{ border-top:3px solid var(--amber-soft); }
+
+  /* History: field-log cards */
+  .empty{
+    background:var(--card);
+    border:1px dashed var(--line);
+    border-radius:var(--radius);
+    color:var(--muted);
+    font-size:14px;
+    padding:32px 16px;
+    text-align:center;
+  }
+  .log{ display:flex; flex-direction:column; gap:12px; }
+  .log-entry{
+    background:var(--card);
+    border:1px solid var(--line);
+    border-left:4px solid var(--navy2);
+    border-radius:var(--radius);
+    padding:16px 20px;
+  }
+  .log-entry-head{
+    display:flex;
+    justify-content:space-between;
+    align-items:baseline;
+    margin-bottom:12px;
+    padding-bottom:10px;
+    border-bottom:1px solid var(--line);
+  }
+  .log-entry-head .wk{
+    font-family:'IBM Plex Mono', monospace;
+    font-weight:600;
+    font-size:14px;
+    color:var(--navy2);
+  }
+  .log-entry-head .updated{
+    font-size:11.5px;
+    color:var(--muted);
+    font-family:'IBM Plex Mono', monospace;
+  }
+  .days{
+    display:grid;
+    grid-template-columns:repeat(4, 1fr);
+    gap:14px;
+  }
+  .day{ min-width:0; }
+  .day .day-label{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:10.5px;
+    letter-spacing:.08em;
+    text-transform:uppercase;
+    color:var(--amber);
+    font-weight:600;
+    margin-bottom:5px;
+  }
+  .day .day-text{
+    font-size:13px;
+    line-height:1.45;
+    color:var(--ink);
+    word-break:break-word;
+  }
+  .day .day-text.blank{ color:var(--muted); font-style:italic; }
+
+  @media (max-width: 620px){
+    .days{ grid-template-columns:1fr 1fr; }
+    header{ padding:16px 18px; }
+    .wrap{ padding:22px 14px 48px; }
+  }
+</style>
 </head>
 <body>
   <header>
-    <div>NDMA Internship Portal — <%= intern.name %></div>
-    <a href="/logout">Log out</a>
+    <div class="brand">
+      <span class="eyebrow">NDMA Internship 2026</span>
+      <span class="name"><%= intern.name %></span>
+    </div>
+    <a class="logout" href="/logout">Log out</a>
   </header>
+
   <div class="wrap">
-    <h2>Select a week to submit or edit</h2>
+    <div class="section-head">
+      <h2>Weekly log</h2>
+      <span class="hint"><%= submittedWeeks.size %> of <%= weeks.length %> weeks submitted</span>
+    </div>
+    <div class="progress-card">
+      <div class="progress-count"><%= submittedWeeks.size %><span>/<%= weeks.length %></span></div>
+      <div class="progress-track">
+        <div class="progress-fill" style="width:<%= Math.round((submittedWeeks.size / weeks.length) * 100) %>%"></div>
+      </div>
+    </div>
+
+    <div class="section-head">
+      <h2>Select a week</h2>
+      <span class="hint">Tap a week to submit or edit</span>
+    </div>
     <div class="grid">
       <% weeks.forEach(w => { %>
         <a class="week-btn <%= submittedWeeks.has(w) ? 'done' : 'pending' %>" href="/submit/<%= w %>">
-          Week <%= w %><br><small><%= submittedWeeks.has(w) ? '✓ Submitted' : 'Not submitted' %></small>
+          <span class="wk">W<%= String(w).padStart(2,'0') %></span>
+          <span class="status"><%= submittedWeeks.has(w) ? 'Submitted' : 'Not submitted' %></span>
         </a>
       <% }) %>
     </div>
 
-    <h2>Submission history</h2>
+    <div class="section-head">
+      <h2>Submission history</h2>
+    </div>
     <% if (submissions.length === 0) { %>
       <div class="empty">No submissions yet. Pick a week above to get started.</div>
     <% } else { %>
-      <table>
-        <tr><th>Week</th><th>Monday</th><th>Tuesday</th><th>Wednesday</th><th>Thursday</th><th>Last Updated</th></tr>
+      <div class="log">
         <% submissions.forEach(s => { %>
-          <tr>
-            <td>Week <%= s.week_number %></td>
-            <td><%= s.monday_text || '—' %></td>
-            <td><%= s.tuesday_text || '—' %></td>
-            <td><%= s.wednesday_text || '—' %></td>
-            <td><%= s.thursday_text || '—' %></td>
-            <td><%= new Date(s.updated_at).toLocaleString() %></td>
-          </tr>
+          <div class="log-entry">
+            <div class="log-entry-head">
+              <span class="wk">Week <%= s.week_number %></span>
+              <span class="updated">Updated <%= new Date(s.updated_at).toLocaleString() %></span>
+            </div>
+            <div class="days">
+              <div class="day">
+                <div class="day-label">Mon</div>
+                <div class="day-text <%= s.monday_text ? '' : 'blank' %>"><%= s.monday_text || 'No entry' %></div>
+              </div>
+              <div class="day">
+                <div class="day-label">Tue</div>
+                <div class="day-text <%= s.tuesday_text ? '' : 'blank' %>"><%= s.tuesday_text || 'No entry' %></div>
+              </div>
+              <div class="day">
+                <div class="day-label">Wed</div>
+                <div class="day-text <%= s.wednesday_text ? '' : 'blank' %>"><%= s.wednesday_text || 'No entry' %></div>
+              </div>
+              <div class="day">
+                <div class="day-label">Thu</div>
+                <div class="day-text <%= s.thursday_text ? '' : 'blank' %>"><%= s.thursday_text || 'No entry' %></div>
+              </div>
+            </div>
+          </div>
         <% }) %>
-      </table>
+      </div>
     <% } %>
   </div>
 </body>
