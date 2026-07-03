@@ -285,7 +285,7 @@ app.get('/admin', requireAdmin, async (req, res) => {
 app.get('/admin/export', requireAdmin, async (req, res) => {
   const { week, intern } = req.query;
   let query = `
-    SELECT wp.week_number, i.full_name, i.university, i.department, wp.monday_text, wp.tuesday_text, wp.wednesday_text, wp.thursday_text, wp.submitted_at, wp.updated_at
+    SELECT wp.week_number, i.full_name, i.university, i.specialization, wp.monday_text, wp.tuesday_text, wp.wednesday_text, wp.thursday_text, wp.submitted_at, wp.updated_at
     FROM weekly_progress wp JOIN interns i ON i.id = wp.intern_id WHERE 1=1`;
   const params = [];
   if (week) { params.push(week); query += ` AND wp.week_number = $${params.length}`; }
@@ -299,7 +299,7 @@ app.get('/admin/export', requireAdmin, async (req, res) => {
     { header: 'Week', key: 'week_number', width: 8 },
     { header: 'Intern', key: 'full_name', width: 30 },
     { header: 'University', key: 'university', width: 30 },
-    { header: 'Department', key: 'department', width: 20 },
+    { header: 'Specialization', key: 'specialization', width: 20 },
     { header: 'Monday', key: 'monday_text', width: 30 },
     { header: 'Tuesday', key: 'tuesday_text', width: 30 },
     { header: 'Wednesday', key: 'wednesday_text', width: 30 },
