@@ -4,9 +4,6 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>My Weekly Progress — NDMA Internship</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet">
 <style>
   :root{
     --paper:#f4f1e9;
@@ -19,13 +16,16 @@
     --line:#e1dbcb;
     --card:#ffffff;
     --radius:10px;
+    --font-body: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    --font-display: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    --font-mono: ui-monospace, "SFMono-Regular", "Consolas", "Liberation Mono", Menlo, monospace;
   }
   *{box-sizing:border-box;}
   body{
     margin:0;
     background:var(--paper);
     color:var(--ink);
-    font-family:'IBM Plex Sans', system-ui, sans-serif;
+    font-family:var(--font-body);
     -webkit-font-smoothing:antialiased;
   }
 
@@ -41,14 +41,14 @@
   }
   .brand{ display:flex; flex-direction:column; gap:2px; }
   .brand .eyebrow{
-    font-family:'IBM Plex Mono', monospace;
+    font-family:var(--font-mono);
     font-size:11px;
     letter-spacing:.14em;
     text-transform:uppercase;
     color:#e7c98a;
   }
   .brand .name{
-    font-family:'Space Grotesk', sans-serif;
+    font-family:var(--font-display);
     font-weight:600;
     font-size:19px;
   }
@@ -73,7 +73,7 @@
     margin:36px 0 14px;
   }
   .section-head h2{
-    font-family:'Space Grotesk', sans-serif;
+    font-family:var(--font-display);
     font-size:17px;
     font-weight:600;
     color:var(--navy2);
@@ -92,7 +92,7 @@
     gap:18px;
   }
   .progress-count{
-    font-family:'IBM Plex Mono', monospace;
+    font-family:var(--font-mono);
     font-size:22px;
     font-weight:600;
     color:var(--navy2);
@@ -138,7 +138,7 @@
     border-color:#c9c1ac;
   }
   .week-btn .wk{
-    font-family:'IBM Plex Mono', monospace;
+    font-family:var(--font-mono);
     font-size:20px;
     font-weight:600;
     color:var(--navy2);
@@ -191,7 +191,7 @@
     border-bottom:1px solid var(--line);
   }
   .log-entry-head .wk{
-    font-family:'IBM Plex Mono', monospace;
+    font-family:var(--font-mono);
     font-weight:600;
     font-size:14px;
     color:var(--navy2);
@@ -199,7 +199,7 @@
   .log-entry-head .updated{
     font-size:11.5px;
     color:var(--muted);
-    font-family:'IBM Plex Mono', monospace;
+    font-family:var(--font-mono);
   }
   .days{
     display:grid;
@@ -208,7 +208,7 @@
   }
   .day{ min-width:0; }
   .day .day-label{
-    font-family:'IBM Plex Mono', monospace;
+    font-family:var(--font-mono);
     font-size:10.5px;
     letter-spacing:.08em;
     text-transform:uppercase;
