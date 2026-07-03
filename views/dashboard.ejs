@@ -39,16 +39,14 @@
       <div class="empty">No submissions yet. Pick a week above to get started.</div>
     <% } else { %>
       <table>
-        <tr><th>Week</th><th>Task</th><th>Attachments</th><th>Last Updated</th></tr>
+        <tr><th>Week</th><th>Monday</th><th>Tuesday</th><th>Wednesday</th><th>Thursday</th><th>Last Updated</th></tr>
         <% submissions.forEach(s => { %>
           <tr>
             <td>Week <%= s.week_number %></td>
-            <td><%= s.task_text %></td>
-            <td>
-              <% (s.attachments ? s.attachments.split(',') : []).forEach(f => { %>
-                <a href="<%= f %>" target="_blank">📎</a>
-              <% }) %>
-            </td>
+            <td><%= s.monday_text || '—' %></td>
+            <td><%= s.tuesday_text || '—' %></td>
+            <td><%= s.wednesday_text || '—' %></td>
+            <td><%= s.thursday_text || '—' %></td>
             <td><%= new Date(s.updated_at).toLocaleString() %></td>
           </tr>
         <% }) %>
