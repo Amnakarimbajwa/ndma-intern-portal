@@ -40,13 +40,16 @@
     <div class="stat"><%= submissions.length %> submission(s) matching current filter</div>
 
     <table>
-      <tr><th>Week</th><th>Intern</th><th>University</th><th>Task (Mon–Thu)</th><th>Updated</th></tr>
+      <tr><th>Week</th><th>Intern</th><th>University</th><th>Task (Mon–Thu)</th><th>Summary</th><th>Project Title</th><th>Project Explanation</th><th>Updated</th></tr>
       <% submissions.forEach(s => { %>
         <tr>
           <td>Week <%= s.week_number %></td>
           <td><%= s.full_name %></td>
           <td><%= s.university %></td>
           <td style="white-space:pre-line"><%= s.task_text %></td>
+          <td style="white-space:pre-line"><%= s.summary_text || '—' %></td>
+          <td><%= s.project_title || '—' %></td>
+          <td style="white-space:pre-line"><%= s.project_description || '—' %></td>
           <td><%= new Date(s.updated_at).toLocaleDateString() %></td>
         </tr>
       <% }) %>
