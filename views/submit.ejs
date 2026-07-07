@@ -44,6 +44,17 @@
         <label>Thursday</label>
         <textarea name="thursday" placeholder="What did you work on Thursday?"><%= existing ? existing.thursday_text : '' %></textarea>
 
+        <label>Summary of the Week</label>
+        <textarea name="weekSummary" placeholder="Briefly summarize the whole week's work"><%= existing ? existing.summary_text : '' %></textarea>
+
+        <% if (week === 5 || week === 6) { %>
+          <label>Project Title</label>
+          <input type="text" name="projectTitle" placeholder="Title of your project" value="<%= existing ? (existing.project_title || '') : '' %>">
+
+          <label>Project Explanation</label>
+          <textarea name="projectDescription" placeholder="Explain your project in detail"><%= existing ? (existing.project_description || '') : '' %></textarea>
+        <% } %>
+
         <button type="submit"><%= existing ? 'Update Submission' : 'Submit' %></button>
       </form>
     </div>
