@@ -199,12 +199,16 @@ app.get('/submit/:week', requireIntern, async (req, res) => {
 
 app.post('/submit/:week', requireIntern, async (req, res) => {
   const week = parseInt(req.params.week);
-  const { monday, tuesday, wednesday, thursday, weekStartDate } = req.body;
+  const isProjectWeek = (week === 5 || week === 6);
+  const { monday, tuesday, wednesday, thursday, weekSummary, projectTitle, projectDescription, weekStartDate } = req.body;
   const dayValues = { monday, tuesday, wednesday, thursday };
 
   const hasAnyText = DAYS.some(d => (dayValues[d.key] || '').trim());
   if (!hasAnyText) {
     return res.render('submit', { intern: req.session.intern, week, existing: null, error: 'Please fill in at least one day before submitting' });
+  }
+  if (isProjectWeek && !(projectTitle || '').trim()) {
+    return res.render('submit', { intern: req.session.intern, week, existing: null, error: 'Please enter a Project Title for this week' });
   }
 
   // Combined summary kept in sync so the admin table/export (which read
@@ -212,6 +216,11 @@ app.post('/submit/:week', requireIntern, async (req, res) => {
   const taskText = DAYS
     .map(d => `${d.label}: ${(dayValues[d.key] || '').trim() || '—'}`)
     .join('\n');
+
+  const summaryText = (weekSummary || '').trim();
+  // Project fields only apply to weeks 5 & 6 — stored as null any other week.
+  const finalProjectTitle = isProjectWeek ? (projectTitle || '').trim() : null;
+  const finalProjectDescription = isProjectWeek ? (projectDescription || '').trim() : null;
 
   const { rows } = await pool.query(
     'SELECT id FROM weekly_progress WHERE intern_id=$1 AND week_number=$2',
@@ -223,19 +232,23 @@ app.post('/submit/:week', requireIntern, async (req, res) => {
       `UPDATE weekly_progress
        SET task_text=$1, week_start_date=$2,
            monday_text=$3, tuesday_text=$4, wednesday_text=$5, thursday_text=$6,
+           summary_text=$7, project_title=$8, project_description=$9,
            updated_at=NOW()
-       WHERE intern_id=$7 AND week_number=$8`,
+       WHERE intern_id=$10 AND week_number=$11`,
       [taskText, weekStartDate || null,
        (monday || '').trim(), (tuesday || '').trim(), (wednesday || '').trim(), (thursday || '').trim(),
+       summaryText, finalProjectTitle, finalProjectDescription,
        req.session.intern.id, week]
     );
   } else {
     await pool.query(
       `INSERT INTO weekly_progress
-        (intern_id, week_number, week_start_date, task_text, monday_text, tuesday_text, wednesday_text, thursday_text)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8)`,
+        (intern_id, week_number, week_start_date, task_text, monday_text, tuesday_text, wednesday_text, thursday_text,
+         summary_text, project_title, project_description)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11)`,
       [req.session.intern.id, week, weekStartDate || null, taskText,
-       (monday || '').trim(), (tuesday || '').trim(), (wednesday || '').trim(), (thursday || '').trim()]
+       (monday || '').trim(), (tuesday || '').trim(), (wednesday || '').trim(), (thursday || '').trim(),
+       summaryText, finalProjectTitle, finalProjectDescription]
     );
   }
   res.redirect('/dashboard');
@@ -285,7 +298,8 @@ app.get('/admin', requireAdmin, async (req, res) => {
 app.get('/admin/export', requireAdmin, async (req, res) => {
   const { week, intern } = req.query;
   let query = `
-    SELECT wp.week_number, i.full_name, i.university, i.specialization, wp.monday_text, wp.tuesday_text, wp.wednesday_text, wp.thursday_text, wp.submitted_at, wp.updated_at
+    SELECT wp.week_number, i.full_name, i.university, i.specialization, wp.monday_text, wp.tuesday_text, wp.wednesday_text, wp.thursday_text,
+           wp.summary_text, wp.project_title, wp.project_description, wp.submitted_at, wp.updated_at
     FROM weekly_progress wp JOIN interns i ON i.id = wp.intern_id WHERE 1=1`;
   const params = [];
   if (week) { params.push(week); query += ` AND wp.week_number = $${params.length}`; }
@@ -304,6 +318,9 @@ app.get('/admin/export', requireAdmin, async (req, res) => {
     { header: 'Tuesday', key: 'tuesday_text', width: 30 },
     { header: 'Wednesday', key: 'wednesday_text', width: 30 },
     { header: 'Thursday', key: 'thursday_text', width: 30 },
+    { header: 'Weekly Summary', key: 'summary_text', width: 35 },
+    { header: 'Project Title', key: 'project_title', width: 25 },
+    { header: 'Project Explanation', key: 'project_description', width: 40 },
     { header: 'Submitted At', key: 'submitted_at', width: 20 },
   ];
   rows.forEach(r => ws.addRow(r));
